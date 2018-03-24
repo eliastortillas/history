@@ -1,27 +1,20 @@
-Historical visualizations
-================
-Elias M Guerra
-3/24/2018
+---
+title: "Historical visualizations"
+author: "Elias M Guerra"
+date: "3/24/2018"
+output: github_document
+---
 
-``` r
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(stringr)
 library(tidyverse)
 ```
 
-``` r
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 ## World Population data
 # http://www.ggdc.net/maddison/oriindex.htm
 setwd("~/Documents/R/just_for_fun/maddison_worldpopulation-gdp-percapita/")
 list.files()
-```
-
-    ## [1] "GDP-Table 1.csv"                                                  
-    ## [2] "PerCapita GDP-Table 1.csv"                                        
-    ## [3] "Population-Table 1.csv"                                           
-    ## [4] "Statistics on World Population, GDP and Per Capita GDP, 1-2008 AD"
-    ## [5] "Table of Contents-Table 1.csv"
-
-``` r
 maddison_pop <- read.csv("Population-Table 1.csv", skip = 2, header = T, stringsAsFactors = F)
 maddison_pop <- maddison_pop[!is.na(maddison_pop$X),]
 colnames(maddison_pop)[1] <- "year"
@@ -55,6 +48,6 @@ poplong %>%
   guides(color = F, linetype = F)
 ```
 
-![](README_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
-
 #### References
+
+
