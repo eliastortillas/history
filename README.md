@@ -1,60 +1,83 @@
 Historical visualizations
 ================
-Elias M Guerra
-3/24/2018
+Started March 2018
 
 ``` r
-library(stringr)
-library(tidyverse)
+library(readr)
+library(dplyr)
+library(ggplot2)
 ```
 
 ``` r
-## World Population data
-# http://www.ggdc.net/maddison/oriindex.htm
-setwd("~/Documents/R/just_for_fun/maddison_worldpopulation-gdp-percapita/")
-list.files()
-```
+library(tidyr)
 
-    ## [1] "GDP-Table 1.csv"                                                  
-    ## [2] "PerCapita GDP-Table 1.csv"                                        
-    ## [3] "Population-Table 1.csv"                                           
-    ## [4] "Statistics on World Population, GDP and Per Capita GDP, 1-2008 AD"
-    ## [5] "Table of Contents-Table 1.csv"
+gdp <- read_csv("~/Downloads/Aggegrated_History - PerCapGDP.csv") %>%
+  gather(key = "country", value = "percapgdp", France:Africa) %>%
+  select(-parameter)
+pop <- read_csv("~/Downloads/Aggegrated_History - Pop.csv") %>%
+  gather(key = "country", value = "population", France:Africa) %>%
+  select(-parameter)
+pp <- inner_join(gdp, pop, by = c("year", "country")) 
+write_csv(pp, "/Users/Malaquias/Google Drive/DATA/History/Aggregated_History_Long.csv")
+```
 
 ``` r
-maddison_pop <- read.csv("Population-Table 1.csv", skip = 2, header = T, stringsAsFactors = F)
-maddison_pop <- maddison_pop[!is.na(maddison_pop$X),]
-colnames(maddison_pop)[1] <- "year"
-poplong <- gather(maddison_pop, country, population, -year) # make data long
-poplong$country <- tolower(poplong$country)
-poplong$population <- poplong$population %>% str_replace_all(",","") %>% as.numeric()
-poplong$population <- poplong$population/1000
-# Additional population data copied from textbook "Europe 1783-1914" by William Simpson and Martin Jones (3rd Ed)
-simpsonjones_population <- read_csv("~/Documents/R/just_for_fun/population_europe_simpsonandjones2015.csv")
-simpsonjones_population <- simpsonjones_population[1:10,1:4]
-simpsonjones_population$country[1:2] <- c("uk","austria")
-simpsonjones_population$country <- tolower(simpsonjones_population$country)
-simpsonjones_population <- gather(simpsonjones_population, year, population, -country) %>% arrange()
-simpsonjones_population <- simpsonjones_population[c("year","country","population")]
-simpsonjones_population <- filter(simpsonjones_population, year != 1850)
-# Combine datasets
-poplong <- rbind(simpsonjones_population, poplong) 
-poplong$year <- as.numeric(poplong$year)
-# Graph: Population in Western Europe, 1700 to present
-poplong %>% 
-  filter(year >= 1700, country %in% c("uk","germany","france", "italy")) %>% 
-  ggplot + 
-  geom_line(aes(year, population, color = country, linetype = country)) +
-  ggtitle("Population in Western Europe, 1700 to present") +
-  ylab("population (millions)") +
-  geom_text(data = data.frame(
-    x = c(1965, 1910, 1915, 1915 ),
-    y = c(42, 68, 35, 49),
-    text = c("France", "Germany", "Italy","United Kingdom")
-  ), aes(x,y,label = text)) +
-  guides(color = F, linetype = F)
+pop <- read_csv("/Users/Malaquias/Google Drive/DATA/History/Aggregated_History_Long.csv")
+pop$pop.mil <- pop$population/1000 # Convert population to millions
 ```
 
-![](README_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
+This should begin with some data exploration. Maps would work well for this.
 
-#### References
+``` r
+Western.Europe <- c("France", "Germany", "Italy", "Spain", "UK") 
+
+pop %>%
+  filter(year > 1700, country %in% Western.Europe) %>%
+  ggplot() +
+  geom_line(aes(x = year, y= pop.mil, color = country, linetype = country)) +
+  ggtitle("Population of Western Europe in millions")
+```
+
+![](README_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png)
+
+``` r
+pop %>%
+  filter(year > 1850, country %in% Western.Europe) %>%
+  ggplot() +
+  geom_line(aes(x = year, y= percapgdp, color = country, linetype = country)) + 
+  ggtitle("Per Capita GDP of Western Europe in millions") 
+```
+
+    ## Warning: Removed 10 rows containing missing values (geom_path).
+
+![](README_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-2.png)
+
+``` r
+# What are the units for this???
+```
+
+#### World War II
+
+Axis powers and
+
+``` r
+unique(pop$country)
+```
+
+    ##  [1] "France"    "Germany"   "Italy"     "UK"        "Spain"    
+    ##  [6] "USA"       "Russia"    "Argentina" "Chile"     "Mexico"   
+    ## [11] "Cuba"      "China"     "India"     "Japan"     "Hong Kong"
+    ## [16] "Malaysia"  "Sri Lanka" "Turkey"    "Africa"
+
+``` r
+ww2.countries <- c("USA", "UK", "France", "Germany", "Italy", "Russia", "Japan")
+
+pop %>%
+  filter(year >= 1939, year <= 1945, country %in% ww2.countries) %>%
+  ggplot() + 
+  geom_line(aes(x = year, y = pop.mil, color = country)) +
+  xlab(NULL) + ylab(NULL) + 
+  ggtitle("Population of countries in WII")
+```
+
+![](README_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
